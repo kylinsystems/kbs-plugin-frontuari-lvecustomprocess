@@ -20,6 +20,7 @@ package net.frontuari.lvecustomprocess.component;
 
 import net.frontuari.lvecustomprocess.base.FTUProcessFactory;
 import net.frontuari.lvecustomprocess.process.FTURfQCreatePO;
+import net.frontuari.lvecustomprocess.process.RequisitionPOCreate;
 
 /**
  * Process Factory
@@ -38,6 +39,7 @@ public class ProcessFactory extends FTUProcessFactory {
 	@Override
 	protected void initialize() {
 		registerProcess(FTURfQCreatePO.class);
+		registerProcess(RequisitionPOCreate.class);
 	}
 
 }

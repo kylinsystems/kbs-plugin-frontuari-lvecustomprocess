@@ -36,10 +36,11 @@ import org.compiere.model.MRequisitionLine;
 import org.compiere.model.POResultSet;
 import org.compiere.model.Query;
 import org.compiere.process.ProcessInfoParameter;
-import org.compiere.process.SvrProcess;
 import org.compiere.util.AdempiereUserError;
 import org.compiere.util.DB;
 import org.compiere.util.Msg;
+
+import net.frontuari.lvecustomprocess.base.FTUProcess;
 
 /**
  * 	Create PO from Requisition 
@@ -56,7 +57,7 @@ import org.compiere.util.Msg;
  *  		<li>FR [ 2844074  ] Requisition PO Create - more selection fields
  *  			https://sourceforge.net/tracker/?func=detail&aid=2844074&group_id=176962&atid=879335
  */
-public class RequisitionPOCreate extends SvrProcess
+public class RequisitionPOCreate extends FTUProcess
 {
 	/** Org					*/
 	private int			p_AD_Org_ID = 0;
@@ -371,6 +372,16 @@ public class RequisitionPOCreate extends SvrProcess
 				m_order.setDescription(msgsd.toString());
 			}
 			
+			//	Added by Jorge Colmenarez 2020-08-17 12:02, jcolmenarez@frontuari.net
+			//	Set Reference Accounting Dimension
+			m_order.setAD_OrgTrx_ID(rLine.get_ValueAsInt("AD_OrgTrx_ID"));
+			m_order.setC_Activity_ID(rLine.get_ValueAsInt("C_Activity_ID"));
+			m_order.setC_Campaign_ID(rLine.get_ValueAsInt("C_Campaign_ID"));
+			m_order.setC_Project_ID(rLine.get_ValueAsInt("C_Project_ID"));
+			m_order.setUser1_ID(rLine.get_ValueAsInt("User1_ID"));
+			m_order.setUser2_ID(rLine.get_ValueAsInt("User2_ID"));
+			//	End Jorge Colmenarez
+			
 			//	Prepare Save
 			m_order.saveEx();
 			// Put to cache
@@ -478,6 +489,8 @@ public class RequisitionPOCreate extends SvrProcess
 		{
 			m_orderLine.setProduct(product);
 			m_orderLine.setM_AttributeSetInstance_ID(rLine.getM_AttributeSetInstance_ID());
+			m_orderLine.setPriceEntered(rLine.getPriceActual());
+			m_orderLine.setPriceActual(rLine.getPriceActual());
 		}
 		else
 		{
@@ -485,7 +498,16 @@ public class RequisitionPOCreate extends SvrProcess
 			m_orderLine.setPriceActual(rLine.getPriceActual());
 		}
 		m_orderLine.setAD_Org_ID(rLine.getAD_Org_ID());
-				
+		
+		//	Added by Jorge Colmenarez 2020-08-17 12:02, jcolmenarez@frontuari.net
+		//	Set Reference Accounting Dimension
+		m_orderLine.setAD_OrgTrx_ID(rLine.get_ValueAsInt("AD_OrgTrx_ID"));
+		m_orderLine.setC_Activity_ID(rLine.get_ValueAsInt("C_Activity_ID"));
+		m_orderLine.setC_Campaign_ID(rLine.get_ValueAsInt("C_Campaign_ID"));
+		m_orderLine.setC_Project_ID(rLine.get_ValueAsInt("C_Project_ID"));
+		m_orderLine.setUser1_ID(rLine.get_ValueAsInt("User1_ID"));
+		m_orderLine.setUser2_ID(rLine.get_ValueAsInt("User2_ID"));
+		//	End Jorge Colmenarez
 		
 		//	Prepare Save
 		m_M_Product_ID = rLine.getM_Product_ID();
