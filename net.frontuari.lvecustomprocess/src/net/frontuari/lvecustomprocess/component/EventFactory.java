@@ -19,6 +19,7 @@
 package net.frontuari.lvecustomprocess.component;
 
 import org.adempiere.base.event.IEventTopics;
+import org.compiere.model.MRfQResponseLineQty;
 import org.compiere.model.MTable;
 
 import net.frontuari.lvecustomprocess.base.FTUEventFactory;
@@ -42,6 +43,8 @@ public class EventFactory extends FTUEventFactory {
 	protected void initialize() {
 		registerEvent(IEventTopics.PO_AFTER_NEW, MTable.Table_Name, FTU_Validator.class);
 		registerEvent(IEventTopics.PO_AFTER_CHANGE, MTable.Table_Name, FTU_Validator.class);
+		registerEvent(IEventTopics.PO_BEFORE_CHANGE, MRfQResponseLineQty.Table_Name, FTU_Validator.class);
+		registerEvent(IEventTopics.PO_BEFORE_NEW, MRfQResponseLineQty.Table_Name, FTU_Validator.class);
 	}
 
 }

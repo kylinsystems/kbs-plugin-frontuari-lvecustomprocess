@@ -71,6 +71,7 @@ public class FTURfQCreatePO extends FTUProcess{
 			MBPartner bp = new MBPartner(getCtx(), response.getC_BPartner_ID(), get_TrxName());
 			if (log.isLoggable(Level.CONFIG)) log.config("Winner=" + bp);
 			MOrder order = new MOrder (getCtx(), 0, get_TrxName());
+			order.setClientOrg(response.getAD_Client_ID(), response.getAD_Org_ID());
 			order.setIsSOTrx(false);
 			if (p_C_DocType_ID != 0)
 				order.setC_DocTypeTarget_ID(p_C_DocType_ID);
@@ -105,10 +106,11 @@ public class FTURfQCreatePO extends FTUProcess{
 					if (qty.getRfQLineQty().isActive() && qty.getRfQLineQty().isPurchaseQty())
 					{
 						MOrderLine ol = new MOrderLine (order);
+						BigDecimal qtyOrdered = (BigDecimal) qty.get_Value("QuotationQuantity");
 						ol.setM_Product_ID(line.getRfQLine().getM_Product_ID(), 
 							qty.getRfQLineQty().getC_UOM_ID());
 						ol.setDescription(line.getDescription());
-						ol.setQty(qty.getRfQLineQty().getQty());
+						ol.setQty(qtyOrdered);
 						BigDecimal price = qty.getNetAmt();
 						ol.setPrice();
 						ol.setPrice(price);
@@ -162,6 +164,7 @@ public class FTURfQCreatePO extends FTUProcess{
 				if (order == null)
 				{
 					order = new MOrder (getCtx(), 0, get_TrxName());
+					order.setClientOrg(response.getAD_Client_ID(), response.getAD_Org_ID());
 					order.setIsSOTrx(false);
 					order.setC_DocTypeTarget_ID();
 					order.setBPartner(bp);
@@ -179,10 +182,11 @@ public class FTURfQCreatePO extends FTUProcess{
 					if (qty.getRfQLineQty().isActive() && qty.getRfQLineQty().isPurchaseQty())
 					{
 						MOrderLine ol = new MOrderLine (order);
+						BigDecimal qtyOrdered = (BigDecimal) qty.get_Value("QuotationQuantity");
 						ol.setM_Product_ID(line.getRfQLine().getM_Product_ID(), 
 							qty.getRfQLineQty().getC_UOM_ID());
 						ol.setDescription(line.getDescription());
-						ol.setQty(qty.getRfQLineQty().getQty());
+						ol.setQty(qtyOrdered);
 						BigDecimal price = qty.getNetAmt();
 						ol.setPrice();
 						ol.setPrice(price);

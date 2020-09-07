@@ -1,6 +1,12 @@
 package net.frontuari.lvecustomprocess.event;
 
+import java.math.BigDecimal;
+import java.util.Optional;
+
 import org.adempiere.base.event.IEventTopics;
+import org.adempiere.exceptions.AdempiereException;
+import org.compiere.model.MRfQLineQty;
+import org.compiere.model.MRfQResponseLineQty;
 import org.compiere.model.MTable;
 import org.compiere.model.M_Element;
 import org.compiere.util.DisplayType;
@@ -18,15 +24,37 @@ public class FTU_Validator extends FTUEvent {
 					|| IEventTopics.PO_AFTER_CHANGE.equals(getEventType())))
 		{
 			MTable table = (MTable) getPO();
-			boolean isNew = IEventTopics.PO_AFTER_NEW.equals(getEventType()); 
+			boolean isNew = IEventTopics.PO_AFTER_NEW.equals(getEventType());
 			
 			if (isNew)
 				createMandatoryColumns(table);
 			
 			if (isNew || table.is_ValueChanged("IsDocument"))
 				createDocumentColumns(table);
+		} else if (MRfQResponseLineQty.Table_Name.equals(getPO().get_TableName())
+				&& (IEventTopics.PO_BEFORE_NEW.equals(getEventType()) || IEventTopics.PO_BEFORE_CHANGE.equals(getEventType())))
+			validateRfqLineQty();
+		
+	}
+	
+	private void validateRfqLineQty() {
+		
+		MRfQResponseLineQty responseLineQty = (MRfQResponseLineQty) getPO();
+		MRfQLineQty lineQty = responseLineQty.getRfQLineQty();
+		
+		BigDecimal qty = lineQty.getQty();
+		
+		BigDecimal proposedQuantity = Optional.ofNullable((BigDecimal) responseLineQty.get_Value("ProposedQuantity"))
+				.orElse(BigDecimal.ZERO);
+		
+		if (BigDecimal.ZERO.equals(proposedQuantity))
+		{
+			responseLineQty.set_ValueOfColumn("ProposedQuantity", qty);
+			return ;
 		}
 		
+		if (proposedQuantity.compareTo(qty) > 0)
+			throw new AdempiereException("@ProposedQuantity@ > @Qty@");
 	}
 	
 	private void createDocumentColumns(MTable table) {
