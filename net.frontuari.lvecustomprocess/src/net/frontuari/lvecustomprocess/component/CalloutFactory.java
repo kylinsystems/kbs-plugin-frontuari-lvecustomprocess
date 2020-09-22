@@ -18,7 +18,10 @@
 
 package net.frontuari.lvecustomprocess.component;
 
+import org.compiere.model.MRfQResponseLineQty;
+
 import net.frontuari.lvecustomprocess.base.FTUCalloutFactory;
+import net.frontuari.lvecustomprocess.callout.CalloutRfqResponseLineQty;
 
 /**
  * Callout Factory
@@ -36,6 +39,10 @@ public class CalloutFactory extends FTUCalloutFactory {
 	 */
 	@Override
 	protected void initialize() {
+		//Register Callout for Rfq Resonse Line By Argenis Rodríguez
+		registerCallout(MRfQResponseLineQty.Table_Name
+				, MRfQResponseLineQty.COLUMNNAME_C_RfQResponseLineQty_ID
+				, CalloutRfqResponseLineQty.class);
 	}
 
 }

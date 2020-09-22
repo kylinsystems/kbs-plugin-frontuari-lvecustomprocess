@@ -1,17 +1,20 @@
 package net.frontuari.lvecustomprocess.process;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.logging.Level;
 
 import org.compiere.model.MBPartner;
 import org.compiere.model.MOrder;
 import org.compiere.model.MOrderLine;
+import org.compiere.model.MRequisition;
 import org.compiere.model.MRequisitionLine;
 import org.compiere.model.MRfQ;
 import org.compiere.model.MRfQLine;
 import org.compiere.model.MRfQResponse;
 import org.compiere.model.MRfQResponseLine;
 import org.compiere.model.MRfQResponseLineQty;
+import org.compiere.model.Query;
 import org.compiere.process.ProcessInfoParameter;
 
 import net.frontuari.lvecustomprocess.base.FTUProcess;
@@ -51,51 +54,94 @@ public class FTURfQCreatePO extends FTUProcess{
 	protected String doIt () throws Exception
 	{
 		MRfQ rfq = new MRfQ (getCtx(), p_C_RfQ_ID, get_TrxName());
+		int lastAD_Org_ID = 0;
 		if (rfq.get_ID() == 0)
 			throw new IllegalArgumentException("No RfQ found");
 		if (log.isLoggable(Level.INFO)) log.info(rfq.toString());
 		
 		//	Complete 
-		MRfQResponse[] responses = rfq.getResponses(true, true);
-		if (log.isLoggable(Level.CONFIG)) log.config("#Responses=" + responses.length);
-		if (responses.length == 0)
+		//MRfQResponse[] responses = rfq.getResponses(true, true);
+		List<MRfQResponse> responses = new Query(getCtx(), MRfQResponse.Table_Name, "C_RfQ_ID = ? AND IsComplete = 'Y'", get_TrxName())
+				.setOnlyActiveRecords(true)
+				.setParameters(rfq.get_ID())
+				.setOrderBy("C_PaymentTerm_ID, Price")
+				.list();
+		
+		if (log.isLoggable(Level.CONFIG)) log.config("#Responses=" + responses.size());
+		if (responses.size() == 0)
 			throw new IllegalArgumentException("No completed RfQ Responses found");
 		
 		//	Winner for entire RfQ
-		for (int i = 0; i < responses.length; i++)
+		for (int i = 0; i < responses.size(); i++)
 		{
-			MRfQResponse response = responses[i];
+			MRfQResponse response = responses.get(i);
 			if (!response.isSelectedWinner())
 				continue;
 			//
+			MOrder order = null;
 			MBPartner bp = new MBPartner(getCtx(), response.getC_BPartner_ID(), get_TrxName());
 			if (log.isLoggable(Level.CONFIG)) log.config("Winner=" + bp);
-			MOrder order = new MOrder (getCtx(), 0, get_TrxName());
-			order.setClientOrg(response.getAD_Client_ID(), response.getAD_Org_ID());
-			order.setIsSOTrx(false);
-			if (p_C_DocType_ID != 0)
-				order.setC_DocTypeTarget_ID(p_C_DocType_ID);
-			else
-				order.setC_DocTypeTarget_ID();
-			order.setBPartner(bp);
-			order.setC_BPartner_Location_ID(response.getC_BPartner_Location_ID());
-			order.setSalesRep_ID(rfq.getSalesRep_ID());
-			if (response.getDateWorkComplete() != null)
-				order.setDatePromised(response.getDateWorkComplete());
-			else if (rfq.getDateWorkComplete() != null)
-				order.setDatePromised(rfq.getDateWorkComplete());
-			order.saveEx();
 			//
-			MRfQResponseLine[] lines = response.getLines(false);
-			for (int j = 0; j < lines.length; j++)
-			{
+			//MRfQResponseLine[] lines = response.getLines(false);
+			String where = "C_RfQResponseLine.C_RfQResponse_ID = ?";
+			List<MRfQResponseLine> lines = new Query(response.getCtx(), MRfQResponseLine.Table_Name, where, response.get_TrxName())
+					.addJoinClause("INNER JOIN C_RfQLine rfql ON rfql.C_RfQLine_ID = C_RfQResponseLine.C_RfQLine_ID")
+					.setOnlyActiveRecords(true)
+					.setParameters(response.get_ID())
+					.setOrderBy("rfql.AD_Org_ID")
+					.list();
+			for (int j = 0; j < lines.size(); j++)
+			{				
 				//	Respones Line
-				MRfQResponseLine line = lines[j];
+				MRfQResponseLine line = lines.get(j);
 				if (!line.isActive())
 					continue;
 				
-				MRfQLine rfqline = new MRfQLine(getCtx(), line.getRfQLine().get_ID(), null);
+				MRfQLine rfqline = new MRfQLine(getCtx(), line.getRfQLine().get_ID(), line.get_TrxName());
+				int M_RequisitionLine_ID = rfqline.get_ValueAsInt(MRequisitionLine.COLUMNNAME_M_RequisitionLine_ID);
 				
+				MRequisitionLine reqLine = null;
+				MRequisition requisition = null;
+				
+				if (M_RequisitionLine_ID != 0)
+					reqLine = new MRequisitionLine(rfqline.getCtx(), M_RequisitionLine_ID, rfqline.get_TrxName());
+				
+				if (reqLine != null)
+					requisition = reqLine.getParent();
+				
+				if (lastAD_Org_ID != rfqline.getAD_Org_ID())
+				{
+					lastAD_Org_ID = rfqline.getAD_Org_ID();
+					order = null;
+				}
+				
+				if (order == null)
+				{
+					int C_PaymentTerm_ID = response.get_ValueAsInt(MOrder.COLUMNNAME_C_PaymentTerm_ID);
+					order = new MOrder (getCtx(), 0, get_TrxName());
+					order.setClientOrg(response.getAD_Client_ID(), lastAD_Org_ID);
+					order.setIsSOTrx(false);
+					if (p_C_DocType_ID != 0)
+						order.setC_DocTypeTarget_ID(p_C_DocType_ID);
+					else
+						order.setC_DocTypeTarget_ID();
+					
+					if (requisition != null)
+						order.setM_Warehouse_ID(requisition.getM_Warehouse_ID());
+					
+					order.setBPartner(bp);
+					order.setC_BPartner_Location_ID(response.getC_BPartner_Location_ID());
+					order.setSalesRep_ID(rfq.getSalesRep_ID());
+					
+					if (C_PaymentTerm_ID != 0)
+						order.setC_PaymentTerm_ID(C_PaymentTerm_ID);
+					
+					if (response.getDateWorkComplete() != null)
+						order.setDatePromised(response.getDateWorkComplete());
+					else if (rfq.getDateWorkComplete() != null)
+						order.setDatePromised(rfq.getDateWorkComplete());
+					order.saveEx();
+				}
 				
 				MRfQResponseLineQty[] qtys = line.getQtys(false);
 				//	Response Line Qty
@@ -106,30 +152,36 @@ public class FTURfQCreatePO extends FTUProcess{
 					if (qty.getRfQLineQty().isActive() && qty.getRfQLineQty().isPurchaseQty())
 					{
 						MOrderLine ol = new MOrderLine (order);
-						BigDecimal qtyOrdered = (BigDecimal) qty.get_Value("QuotationQuantity");
 						ol.setM_Product_ID(line.getRfQLine().getM_Product_ID(), 
 							qty.getRfQLineQty().getC_UOM_ID());
+						if (requisition != null)
+							ol.setM_Warehouse_ID(requisition.getM_Warehouse_ID());
 						ol.setDescription(line.getDescription());
-						ol.setQty(qtyOrdered);
+						ol.setQty(qty.getRfQLineQty().getQty());
 						BigDecimal price = qty.getNetAmt();
 						ol.setPrice();
 						ol.setPrice(price);
 						
-						if(rfqline.get_ValueAsInt("M_RequisitionLine_ID") != 0) {
+						if(M_RequisitionLine_ID != 0) {
 							
-							MRequisitionLine mrl = new MRequisitionLine(getCtx(), rfqline.get_ValueAsInt("M_RequisitionLine_ID"), null);
+							//MRequisitionLine mrl = new MRequisitionLine(getCtx(), rfqline.get_ValueAsInt("M_RequisitionLine_ID"), null);
 							
-							if(mrl.get_ValueAsInt("C_Activity_ID") != 0) {
-								ol.setC_Activity_ID(mrl.get_ValueAsInt("C_Activity_ID"));
+							if(reqLine.get_ValueAsInt("C_Activity_ID") != 0) {
+								ol.setC_Activity_ID(reqLine.get_ValueAsInt("C_Activity_ID"));
 							}
 							
-							if(mrl.get_ValueAsInt("User1_ID") != 0) {
-								ol.setUser1_ID(mrl.get_ValueAsInt("User1_ID"));
+							if(reqLine.get_ValueAsInt("User1_ID") != 0) {
+								ol.setUser1_ID(reqLine.get_ValueAsInt("User1_ID"));
 							}
-							
 						}
 						
 						ol.saveEx();
+						
+						if (reqLine != null)
+						{
+							reqLine.setC_OrderLine_ID(ol.get_ID());
+							reqLine.saveEx();
+						}
 					}
 				}
 			}
@@ -141,22 +193,45 @@ public class FTURfQCreatePO extends FTUProcess{
 		
 		//	Selected Winner on Line Level
 		int noOrders = 0;
-		for (int i = 0; i < responses.length; i++)
+		int lastC_PaymentTerm_ID = 0;
+		lastAD_Org_ID = 0;
+		for (int i = 0; i < responses.size(); i++)
 		{
-			MRfQResponse response = responses[i];
+			MRfQResponse response = responses.get(i);
 			MBPartner bp = null;
 			MOrder order = null;
 			//	For all Response Lines
-			MRfQResponseLine[] lines = response.getLines(false);
-			for (int j = 0; j < lines.length; j++)
+			String where = "C_RfQResponse_ID = ?";
+			List<MRfQResponseLine> lines = new Query(response.getCtx(), MRfQResponseLine.Table_Name, where, response.get_TrxName())
+					.setOnlyActiveRecords(true)
+					.addJoinClause("INNER JOIN C_RfQLine rfql ON rfql.C_RfQLine_ID = C_RfQResponseLine.C_RfQLine_ID")
+					.setOrderBy("rfql.AD_Org_ID")
+					.setParameters(response.get_ID())
+					.list();
+			for (int j = 0; j < lines.size(); j++)
 			{
-				MRfQResponseLine line = lines[j];
+				MRfQResponseLine line = lines.get(j);
 				if (!line.isActive() || !line.isSelectedWinner())
 					continue;
+				
+				MRfQLine rfqLine = (MRfQLine) line.getC_RfQLine();
+				int M_RequisitionLine_ID = rfqLine.get_ValueAsInt(MRequisitionLine.COLUMNNAME_M_RequisitionLine_ID);
+				MRequisitionLine rqLine = null;
+				MRequisition requisition = null;
+				
+				if (M_RequisitionLine_ID != 0)
+					rqLine = new MRequisitionLine(rfqLine.getCtx(), M_RequisitionLine_ID, rfqLine.get_TrxName());
+				if (rqLine != null)
+					requisition = (MRequisition) rqLine.getM_Requisition();
+				
 				//	New/different BP
-				if (bp == null || bp.getC_BPartner_ID() != response.getC_BPartner_ID())
+				if (bp == null || bp.getC_BPartner_ID() != response.getC_BPartner_ID()
+						|| lastAD_Org_ID != rfqLine.getAD_Org_ID()
+						|| lastC_PaymentTerm_ID != response.get_ValueAsInt(MOrder.COLUMNNAME_C_PaymentTerm_ID))
 				{
 					bp = new MBPartner(getCtx(), response.getC_BPartner_ID(), get_TrxName());
+					lastAD_Org_ID = rfqLine.getAD_Org_ID();
+					lastC_PaymentTerm_ID = response.get_ValueAsInt(MOrder.COLUMNNAME_C_PaymentTerm_ID);
 					order = null;
 				}
 				if (log.isLoggable(Level.CONFIG)) log.config("Line=" + line + ", Winner=" + bp);
@@ -164,12 +239,18 @@ public class FTURfQCreatePO extends FTUProcess{
 				if (order == null)
 				{
 					order = new MOrder (getCtx(), 0, get_TrxName());
-					order.setClientOrg(response.getAD_Client_ID(), response.getAD_Org_ID());
+					order.setClientOrg(response.getAD_Client_ID(), lastAD_Org_ID);
 					order.setIsSOTrx(false);
 					order.setC_DocTypeTarget_ID();
 					order.setBPartner(bp);
 					order.setC_BPartner_Location_ID(response.getC_BPartner_Location_ID());
 					order.setSalesRep_ID(rfq.getSalesRep_ID());
+					
+					if (requisition != null)
+						order.setM_Warehouse_ID(requisition.getM_Warehouse_ID());
+					if (lastC_PaymentTerm_ID != 0)
+						order.setC_PaymentTerm_ID(lastC_PaymentTerm_ID);
+					
 					order.saveEx();
 					noOrders++;
 					addBufferLog(0, null, null, order.getDocumentNo(), order.get_Table_ID(), order.getC_Order_ID());
@@ -185,12 +266,22 @@ public class FTURfQCreatePO extends FTUProcess{
 						BigDecimal qtyOrdered = (BigDecimal) qty.get_Value("QuotationQuantity");
 						ol.setM_Product_ID(line.getRfQLine().getM_Product_ID(), 
 							qty.getRfQLineQty().getC_UOM_ID());
+						
+						if (requisition != null)
+							ol.setM_Warehouse_ID(requisition.getM_Warehouse_ID());
+						
 						ol.setDescription(line.getDescription());
 						ol.setQty(qtyOrdered);
 						BigDecimal price = qty.getNetAmt();
 						ol.setPrice();
 						ol.setPrice(price);
 						ol.saveEx();
+						
+						if (rqLine != null)
+						{
+							rqLine.setC_OrderLine_ID(ol.get_ID());
+							rqLine.saveEx();
+						}
 					}
 				}	//	for all Qtys
 			}	//	for all Response Lines
