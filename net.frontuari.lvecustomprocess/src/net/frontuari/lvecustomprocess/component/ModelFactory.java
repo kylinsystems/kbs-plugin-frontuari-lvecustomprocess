@@ -19,6 +19,8 @@
 package net.frontuari.lvecustomprocess.component;
 
 import net.frontuari.lvecustomprocess.base.FTUModelFactory;
+import net.frontuari.lvecustomprocess.model.FTUMRfQResponse;
+import net.frontuari.lvecustomprocess.model.FTUMRfQResponseLine;
 
 /**
  * Model Factory
@@ -36,6 +38,8 @@ public class ModelFactory extends FTUModelFactory {
 	 */
 	@Override
 	protected void initialize() {
+		registerModel(FTUMRfQResponse.Table_Name, FTUMRfQResponse.class);
+		registerModel(FTUMRfQResponseLine.Table_Name, FTUMRfQResponseLine.class);
 	}
 
 }

@@ -19,6 +19,7 @@
 package net.frontuari.lvecustomprocess.component;
 
 import net.frontuari.lvecustomprocess.base.FTUProcessFactory;
+import net.frontuari.lvecustomprocess.process.FTURfQCreate;
 import net.frontuari.lvecustomprocess.process.FTURfQCreatePO;
 import net.frontuari.lvecustomprocess.process.FTURfQResponseRank;
 import net.frontuari.lvecustomprocess.process.RequisitionPOCreate;
@@ -39,6 +40,7 @@ public class ProcessFactory extends FTUProcessFactory {
 	 */
 	@Override
 	protected void initialize() {
+		registerProcess(FTURfQCreate.class);
 		registerProcess(FTURfQCreatePO.class);
 		registerProcess(RequisitionPOCreate.class);
 		registerProcess(FTURfQResponseRank.class);
