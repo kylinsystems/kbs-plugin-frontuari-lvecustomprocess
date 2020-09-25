@@ -12,12 +12,13 @@ import org.compiere.model.MRequisitionLine;
 import org.compiere.model.MRfQ;
 import org.compiere.model.MRfQLine;
 import org.compiere.model.MRfQResponse;
-import org.compiere.model.MRfQResponseLine;
 import org.compiere.model.MRfQResponseLineQty;
 import org.compiere.model.Query;
 import org.compiere.process.ProcessInfoParameter;
 
 import net.frontuari.lvecustomprocess.base.FTUProcess;
+import net.frontuari.lvecustomprocess.model.FTUMRfQResponse;
+import net.frontuari.lvecustomprocess.model.FTUMRfQResponseLine;
 
 public class FTURfQCreatePO extends FTUProcess{
 	/**	RfQ 			*/
@@ -61,7 +62,7 @@ public class FTURfQCreatePO extends FTUProcess{
 		
 		//	Complete 
 		//MRfQResponse[] responses = rfq.getResponses(true, true);
-		List<MRfQResponse> responses = new Query(getCtx(), MRfQResponse.Table_Name, "C_RfQ_ID = ? AND IsComplete = 'Y'", get_TrxName())
+		List<FTUMRfQResponse> responses = new Query(getCtx(), MRfQResponse.Table_Name, "C_RfQ_ID = ? AND IsComplete = 'Y'", get_TrxName())
 				.setOnlyActiveRecords(true)
 				.setParameters(rfq.get_ID())
 				.setOrderBy("C_PaymentTerm_ID, Price")
@@ -74,7 +75,7 @@ public class FTURfQCreatePO extends FTUProcess{
 		//	Winner for entire RfQ
 		for (int i = 0; i < responses.size(); i++)
 		{
-			MRfQResponse response = responses.get(i);
+			FTUMRfQResponse response = responses.get(i);
 			if (!response.isSelectedWinner())
 				continue;
 			//
@@ -84,7 +85,7 @@ public class FTURfQCreatePO extends FTUProcess{
 			//
 			//MRfQResponseLine[] lines = response.getLines(false);
 			String where = "C_RfQResponseLine.C_RfQResponse_ID = ?";
-			List<MRfQResponseLine> lines = new Query(response.getCtx(), MRfQResponseLine.Table_Name, where, response.get_TrxName())
+			List<FTUMRfQResponseLine> lines = new Query(response.getCtx(), FTUMRfQResponseLine.Table_Name, where, response.get_TrxName())
 					.addJoinClause("INNER JOIN C_RfQLine rfql ON rfql.C_RfQLine_ID = C_RfQResponseLine.C_RfQLine_ID")
 					.setOnlyActiveRecords(true)
 					.setParameters(response.get_ID())
@@ -93,7 +94,7 @@ public class FTURfQCreatePO extends FTUProcess{
 			for (int j = 0; j < lines.size(); j++)
 			{				
 				//	Respones Line
-				MRfQResponseLine line = lines.get(j);
+				FTUMRfQResponseLine line = lines.get(j);
 				if (!line.isActive())
 					continue;
 				
@@ -132,7 +133,8 @@ public class FTURfQCreatePO extends FTUProcess{
 					order.setBPartner(bp);
 					order.setC_BPartner_Location_ID(response.getC_BPartner_Location_ID());
 					order.setSalesRep_ID(rfq.getSalesRep_ID());
-					
+					if (rfq.get_ValueAsInt("M_PriceList_ID")>0)
+						order.setM_PriceList_ID(rfq.get_ValueAsInt("M_PriceList_ID"));
 					if (C_PaymentTerm_ID != 0)
 						order.setC_PaymentTerm_ID(C_PaymentTerm_ID);
 					
@@ -197,12 +199,12 @@ public class FTURfQCreatePO extends FTUProcess{
 		lastAD_Org_ID = 0;
 		for (int i = 0; i < responses.size(); i++)
 		{
-			MRfQResponse response = responses.get(i);
+			FTUMRfQResponse response = responses.get(i);
 			MBPartner bp = null;
 			MOrder order = null;
 			//	For all Response Lines
 			String where = "C_RfQResponse_ID = ?";
-			List<MRfQResponseLine> lines = new Query(response.getCtx(), MRfQResponseLine.Table_Name, where, response.get_TrxName())
+			List<FTUMRfQResponseLine> lines = new Query(response.getCtx(), FTUMRfQResponseLine.Table_Name, where, response.get_TrxName())
 					.setOnlyActiveRecords(true)
 					.addJoinClause("INNER JOIN C_RfQLine rfql ON rfql.C_RfQLine_ID = C_RfQResponseLine.C_RfQLine_ID")
 					.setOrderBy("rfql.AD_Org_ID")
@@ -210,7 +212,7 @@ public class FTURfQCreatePO extends FTUProcess{
 					.list();
 			for (int j = 0; j < lines.size(); j++)
 			{
-				MRfQResponseLine line = lines.get(j);
+				FTUMRfQResponseLine line = lines.get(j);
 				if (!line.isActive() || !line.isSelectedWinner())
 					continue;
 				
@@ -250,6 +252,9 @@ public class FTURfQCreatePO extends FTUProcess{
 						order.setM_Warehouse_ID(requisition.getM_Warehouse_ID());
 					if (lastC_PaymentTerm_ID != 0)
 						order.setC_PaymentTerm_ID(lastC_PaymentTerm_ID);
+
+					if (rfq.get_ValueAsInt("M_PriceList_ID")>0)
+						order.setM_PriceList_ID(rfq.get_ValueAsInt("M_PriceList_ID"));
 					
 					order.saveEx();
 					noOrders++;
