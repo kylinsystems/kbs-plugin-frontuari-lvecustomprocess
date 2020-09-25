@@ -1,5 +1,6 @@
 package net.frontuari.lvecustomprocess.model;
 
+import java.sql.ResultSet;
 import java.util.Properties;
 import org.compiere.model.MRfQ;
 import org.compiere.model.MRfQLine;
@@ -32,6 +33,11 @@ public class FTUMRfQResponse extends MRfQResponse{
 			setProcessed(false);
 			setProcessing(false);
 		}
+	}	//	MRfQResponse
+	
+	public FTUMRfQResponse (Properties ctx, ResultSet rs, String trxName)
+	{
+		super(ctx, rs, trxName);
 	}	//	MRfQResponse
 
 	
