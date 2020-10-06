@@ -83,6 +83,32 @@ public class MFTUAging extends MAging {
 				
 			if (daysDue <= -1 && daysDue >= -7)
 				setDue1_7 (getDue1_7().add(amt));
+			
+			//	Add Range Days Due 8-14, 15-21, 22-30
+			if (daysDue <= -8 && daysDue >= -14)
+			{
+				BigDecimal Due8_14 = (BigDecimal)get_Value("Due8_14");
+				if(Due8_14 == null)
+					Due8_14 = BigDecimal.ZERO;
+				set_Value("Due8_14", (Due8_14.add(amt)));
+			}
+			
+			if (daysDue <= -15 && daysDue >= -21)
+			{
+				BigDecimal Due15_21 = (BigDecimal)get_Value("Due15_21");
+				if(Due15_21 == null)
+					Due15_21 = BigDecimal.ZERO;
+				set_Value("Due15_21", (Due15_21.add(amt)));
+			}
+			
+			if (daysDue <= -22 && daysDue >= -30)
+			{
+				BigDecimal Due22_30 = (BigDecimal)get_Value("Due22_30");
+				if(Due22_30 == null)
+					Due22_30 = BigDecimal.ZERO;
+				set_Value("Due22_30", (Due22_30.add(amt)));
+			}
+			//	End
 				
 			if (daysDue <= -8 && daysDue >= -30)
 				setDue8_30 (getDue8_30().add(amt));
@@ -115,6 +141,32 @@ public class MFTUAging extends MAging {
 					PastDue1_21 = BigDecimal.ZERO;
 				set_Value("PastDue1_21", (PastDue1_21.add(amt)));
 			}
+
+			//	Add PastDueDays 8-14,14-21, 22-30
+			if (daysDue >= 8 && daysDue <= 14)
+			{
+				BigDecimal PastDue8_14 = (BigDecimal)get_Value("PastDue8_14");
+				if(PastDue8_14 == null)
+					PastDue8_14 = BigDecimal.ZERO;
+				set_Value("PastDue8_14", (PastDue8_14.add(amt)));
+			}
+			
+			if (daysDue >= 15 && daysDue <= 21)
+			{
+				BigDecimal PastDue15_21 = (BigDecimal)get_Value("PastDue15_21");
+				if(PastDue15_21 == null)
+					PastDue15_21 = BigDecimal.ZERO;
+				set_Value("PastDue15_21", (PastDue15_21.add(amt)));
+			}
+			
+			if (daysDue >= 22 && daysDue <= 30)
+			{
+				BigDecimal PastDue22_30 = (BigDecimal)get_Value("PastDue22_30");
+				if(PastDue22_30 == null)
+					PastDue22_30 = BigDecimal.ZERO;
+				set_Value("PastDue22_30", (PastDue22_30.add(amt)));
+			}
+			//	End
 				
 			if (daysDue <= 30)
 				setPastDue1_30 (getPastDue1_30().add(amt));

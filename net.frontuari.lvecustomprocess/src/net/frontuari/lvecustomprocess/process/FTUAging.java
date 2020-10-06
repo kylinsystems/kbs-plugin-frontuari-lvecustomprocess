@@ -143,7 +143,7 @@ public class FTUAging extends FTUProcess
 		}
 		sql.append(",oi.C_Activity_ID,oi.C_Campaign_ID,oi.C_Project_ID,oi.AD_Org_ID ");	//	14..17
 		//	Added Support for get DocumentNo,C_PaymentTerm_ID
-		sql.append(",oi.DocumentNo,oi.C_PaymentTerm_ID ");	//	18..19
+		sql.append(",oi.DocumentNo,oi.C_PaymentTerm_ID,oi.DateAcct AS DateDoc ");	//	18..20
 		if (!p_DateAcct)//FR 1933937
 		{
 			sql.append(" FROM RV_OpenItem oi");
@@ -196,7 +196,7 @@ public class FTUAging extends FTUProcess
 			{
 				int C_BP_Group_ID = rs.getInt(1);
 				int C_BPartner_ID = rs.getInt(2);
-				int C_Invoice_ID = p_IsListInvoices ? rs.getInt(3) : 0;
+				int C_Invoice_ID = p_IsListInvoices ? rs.getInt(3) : null;
 				int C_InvoicePaySchedule_ID = p_IsListInvoices ? rs.getInt(4) : 0;
 				int C_Currency_ID = rs.getInt(5);
 				boolean IsSOTrx = "Y".equals(rs.getString(6));
@@ -218,7 +218,9 @@ public class FTUAging extends FTUProcess
 				int AD_Org_ID = rs.getInt(17);
 				
 				String DocumentNo = p_IsListInvoices ? rs.getString(18) : "";
-				int C_PaymentTerm_ID = p_IsListInvoices ? rs.getInt(19) : 0;
+				int C_PaymentTerm_ID = p_IsListInvoices ? rs.getInt(19) : null;
+				Timestamp DateInvoiced = p_IsListInvoices ? rs.getTimestamp(7) : null;
+				Timestamp DateDoc = p_IsListInvoices ? rs.getTimestamp(20) : null;
 				
 				rows++;
 				//	New Aging Row
@@ -247,6 +249,8 @@ public class FTUAging extends FTUProcess
 					aging.set_ValueOfColumn("DocumentNo", DocumentNo);
 					aging.set_ValueOfColumn("C_PaymentTerm_ID", C_PaymentTerm_ID);
 					aging.set_ValueOfColumn("GrandTotal", GrandTotal);
+					aging.set_ValueOfColumn("DateInvoiced", DateInvoiced);
+					aging.set_ValueOfColumn("DateDoc", DateDoc);
 				}
 				//	Fill Buckets
 				aging.add (DueDate, DaysDue, GrandTotal, OpenAmt);
