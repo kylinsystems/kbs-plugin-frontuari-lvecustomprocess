@@ -41,7 +41,7 @@ import net.frontuari.lvecustomprocess.model.MFTUAging;
  *  @author Carlos Ruiz - globalqss  BF 2655587  Multi-org not supported in Aging
  *  @see https://sourceforge.net/tracker2/?func=detail&aid=2655587&group_id=176962&atid=879332 
  *  @version $Id: Aging.java,v 1.5 2006/10/07 00:58:44 jjanke Exp $
- *  @author Jorge Colmenarez - Frontuari, C.A.	Add DueAmt and PastDueAmt 0<=21 Days, PaymentTerm, DocumentNo
+ *  @author Jorge Colmenarez - Frontuari, C.A.	Add DueAmt and PastDueAmt 0<=21 Days, PaymentTerm, DocumentNo, GrandTotal
  */
 public class FTUAging extends FTUProcess
 {
@@ -243,9 +243,10 @@ public class FTUAging extends FTUProcess
 					aging.setC_Project_ID(C_Project_ID);
 					aging.setDateAcct(p_DateAcct);
 					aging.setConvertAmountsInCurrency_ID(p_ConvertCurrencyTo_ID);
-					//	Set DocumentNo,C_PaymentTerm_ID
+					//	Set DocumentNo,C_PaymentTerm_ID,GrandTotal
 					aging.set_ValueOfColumn("DocumentNo", DocumentNo);
 					aging.set_ValueOfColumn("C_PaymentTerm_ID", C_PaymentTerm_ID);
+					aging.set_ValueOfColumn("GrandTotal", GrandTotal);
 				}
 				//	Fill Buckets
 				aging.add (DueDate, DaysDue, GrandTotal, OpenAmt);
