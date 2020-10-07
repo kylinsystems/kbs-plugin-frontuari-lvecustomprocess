@@ -11,7 +11,6 @@ import org.compiere.model.MRequisition;
 import org.compiere.model.MRequisitionLine;
 import org.compiere.model.MRfQ;
 import org.compiere.model.MRfQLine;
-import org.compiere.model.MRfQResponse;
 import org.compiere.model.MRfQResponseLineQty;
 import org.compiere.model.Query;
 import org.compiere.process.ProcessInfoParameter;
@@ -62,7 +61,7 @@ public class FTURfQCreatePO extends FTUProcess{
 		
 		//	Complete 
 		//MRfQResponse[] responses = rfq.getResponses(true, true);
-		List<FTUMRfQResponse> responses = new Query(getCtx(), MRfQResponse.Table_Name, "C_RfQ_ID = ? AND IsComplete = 'Y'", get_TrxName())
+		List<FTUMRfQResponse> responses = new Query(getCtx(), FTUMRfQResponse.Table_Name, "C_RfQ_ID = ? AND IsComplete = 'Y'", get_TrxName())
 				.setOnlyActiveRecords(true)
 				.setParameters(rfq.get_ID())
 				.setOrderBy("C_PaymentTerm_ID, Price")
