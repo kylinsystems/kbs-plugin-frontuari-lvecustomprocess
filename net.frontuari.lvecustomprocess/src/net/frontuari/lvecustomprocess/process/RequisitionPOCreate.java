@@ -374,12 +374,16 @@ public class RequisitionPOCreate extends FTUProcess
 			
 			//	Added by Jorge Colmenarez 2020-08-17 12:02, jcolmenarez@frontuari.net
 			//	Set Reference Accounting Dimension
-			m_order.setAD_OrgTrx_ID(rLine.get_ValueAsInt("AD_OrgTrx_ID"));
-			m_order.setC_Activity_ID(rLine.get_ValueAsInt("C_Activity_ID"));
-			m_order.setC_Campaign_ID(rLine.get_ValueAsInt("C_Campaign_ID"));
-			m_order.setC_Project_ID(rLine.get_ValueAsInt("C_Project_ID"));
-			m_order.setUser1_ID(rLine.get_ValueAsInt("User1_ID"));
-			m_order.setUser2_ID(rLine.get_ValueAsInt("User2_ID"));
+			//changed by Adonis Castellanos 2020-10-02 change source of rLine to req 
+			MRequisition req = (MRequisition) rLine.getM_Requisition();
+			m_order.setDescription(req.getDescription());
+			m_order.setAD_OrgTrx_ID(req.get_ValueAsInt("AD_OrgTrx_ID"));
+			m_order.setC_Activity_ID(req.get_ValueAsInt("C_Activity_ID"));
+			m_order.setC_Campaign_ID(req.get_ValueAsInt("C_Campaign_ID"));
+			m_order.setC_Project_ID(req.get_ValueAsInt("C_Project_ID"));
+			m_order.setUser1_ID(req.get_ValueAsInt("User1_ID"));
+			m_order.setUser2_ID(req.get_ValueAsInt("User2_ID"));
+			// End Adonis
 			//	End Jorge Colmenarez
 			
 			//	Prepare Save
@@ -498,6 +502,8 @@ public class RequisitionPOCreate extends FTUProcess
 			m_orderLine.setPriceActual(rLine.getPriceActual());
 		}
 		m_orderLine.setAD_Org_ID(rLine.getAD_Org_ID());
+		//Added by Adonis Castellanos 2020-10-02
+		m_orderLine.setDescription(rLine.getDescription());
 		
 		//	Added by Jorge Colmenarez 2020-08-17 12:02, jcolmenarez@frontuari.net
 		//	Set Reference Accounting Dimension
