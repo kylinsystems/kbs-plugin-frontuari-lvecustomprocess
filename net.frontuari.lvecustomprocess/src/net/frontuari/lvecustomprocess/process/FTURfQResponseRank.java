@@ -136,7 +136,10 @@ public class FTURfQResponseRank extends FTUProcess {
 			for (MRfQResponseLine responseLine: response.getLines())
 			{
 				if (responseLine.isSelectedWinner())
+				{
 					responseLine.setIsSelectedWinner(false);
+					responseLine.saveEx();
+				}
 				
 				for (MRfQResponseLineQty responseLineQty: responseLine.getQtys())
 				{
@@ -266,7 +269,10 @@ public class FTURfQResponseRank extends FTUProcess {
 				if (!respLine.isActive())
 					continue;
 				if (respLine.isSelectedWinner())
+				{
 					respLine.setIsSelectedWinner(false);
+					respLine.saveEx();
+				}
 				MRfQResponseLineQty[] respQtys = respLine.getQtys(false);
 				for (int kk = 0; kk < respQtys.length; kk++)
 				{
