@@ -137,10 +137,16 @@ public class FTURfQCreatePO extends FTUProcess{
 					if (C_PaymentTerm_ID != 0)
 						order.setC_PaymentTerm_ID(C_PaymentTerm_ID);
 					
-					if (response.getDateWorkComplete() != null)
+					if (response.getDateWorkComplete() != null) {
 						order.setDatePromised(response.getDateWorkComplete());
+						order.setUser1_ID(requisition.get_ValueAsInt("User1_ID"));
+						order.setC_Activity_ID(requisition.get_ValueAsInt("C_Activity_ID"));
+						order.setDescription(rfq.getDescription());}
 					else if (rfq.getDateWorkComplete() != null)
-						order.setDatePromised(rfq.getDateWorkComplete());
+					order.setDatePromised(rfq.getDateWorkComplete());
+					order.setUser1_ID(requisition.get_ValueAsInt("User1_ID"));
+					order.setC_Activity_ID(requisition.get_ValueAsInt("C_Activity_ID"));
+					order.setDescription(rfq.getDescription());					
 					order.saveEx();
 				}
 				
@@ -163,7 +169,7 @@ public class FTURfQCreatePO extends FTUProcess{
 						ol.setPrice();
 						ol.setPrice(price);
 						
-						if(M_RequisitionLine_ID != 0) {
+						if(reqLine != null) {
 							
 							//MRequisitionLine mrl = new MRequisitionLine(getCtx(), rfqline.get_ValueAsInt("M_RequisitionLine_ID"), null);
 							
@@ -246,7 +252,10 @@ public class FTURfQCreatePO extends FTUProcess{
 					order.setBPartner(bp);
 					order.setC_BPartner_Location_ID(response.getC_BPartner_Location_ID());
 					order.setSalesRep_ID(rfq.getSalesRep_ID());
-					
+					order.setDescription(rfq.getDescription());
+					order.setUser1_ID(requisition.get_ValueAsInt("User1_ID"));
+					order.setC_Activity_ID(requisition.get_ValueAsInt("C_Activity_ID"));
+					order.setDescription(rfq.getDescription());
 					if (requisition != null)
 						order.setM_Warehouse_ID(requisition.getM_Warehouse_ID());
 					if (lastC_PaymentTerm_ID != 0)
@@ -279,6 +288,18 @@ public class FTURfQCreatePO extends FTUProcess{
 						BigDecimal price = qty.getNetAmt();
 						ol.setPrice();
 						ol.setPrice(price);
+						if(rqLine != null) {
+							
+							//MRequisitionLine mrl = new MRequisitionLine(getCtx(), rfqline.get_ValueAsInt("M_RequisitionLine_ID"), null);
+							
+							if(rqLine.get_ValueAsInt("C_Activity_ID") != 0) {
+								ol.setC_Activity_ID(rqLine.get_ValueAsInt("C_Activity_ID"));
+							}
+							
+							if(rqLine.get_ValueAsInt("User1_ID") != 0) {
+								ol.setUser1_ID(rqLine.get_ValueAsInt("User1_ID"));
+							}
+						}
 						ol.saveEx();
 						
 						if (rqLine != null)
