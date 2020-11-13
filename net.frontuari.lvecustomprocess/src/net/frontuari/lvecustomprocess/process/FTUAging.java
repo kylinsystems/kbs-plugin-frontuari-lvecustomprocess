@@ -97,7 +97,7 @@ public class FTUAging extends FTUProcess
 		else
 			m_statementOffset = TimeUtil.getDaysBetween( 
 				new Timestamp(System.currentTimeMillis()), p_StatementDate);
-	}	//	prepare
+	}	//	prepare 
 
 	/**
 	 * 	DoIt
