@@ -43,7 +43,7 @@ import net.frontuari.lvecustomprocess.model.MFTUAging;
  *  @see https://sourceforge.net/tracker2/?func=detail&aid=2655587&group_id=176962&atid=879332 
  *  @version $Id: Aging.java,v 1.5 2006/10/07 00:58:44 jjanke Exp $
  *  @author Jorge Colmenarez - Frontuari, C.A.	Add DueAmt and PastDueAmt 0<=21 Days, PaymentTerm, DocumentNo, GrandTotal
- *  @author Jose Ruiz - Frontuari, C.A.	Add C_DocType_ID
+ *  @author Jose Ruiz - Frontuari, C.A.	Add C_DocType_ID , C_DocTypeTarget_ID
  */
 public class FTUAging extends FTUProcess
 {
@@ -149,11 +149,11 @@ public class FTUAging extends FTUProcess
 		//	Add CurrencyRate
 		if (p_ConvertCurrencyTo_ID == 0)
 		{
-			sql.append(",currencyRate(oi.C_Currency_ID,"+Env.getContext(getCtx(), "$C_Currency_ID")+",oi.DateInvoiced,oi.C_ConversionType_ID,oi.AD_Client_ID,oi.AD_Org_ID,true) AS Rate,oi.C_DocType_ID "); // 21
+			sql.append(",currencyRate(oi.C_Currency_ID,"+Env.getContext(getCtx(), "$C_Currency_ID")+",oi.DateInvoiced,oi.C_ConversionType_ID,oi.AD_Client_ID,oi.AD_Org_ID,true) AS Rate,oi.C_DocType_ID,oi.C_DocTypeTarget_ID "); // 21
 		}
 		else
 		{
-			sql.append(",currencyRate(oi.C_Currency_ID,"+p_ConvertCurrencyTo_ID+",oi.DateInvoiced,oi.C_ConversionType_ID,oi.AD_Client_ID,oi.AD_Org_ID) AS Rate ,oi.C_DocType_ID"); // 21
+			sql.append(",currencyRate(oi.C_Currency_ID,"+p_ConvertCurrencyTo_ID+",oi.DateInvoiced,oi.C_ConversionType_ID,oi.AD_Client_ID,oi.AD_Org_ID) AS Rate ,oi.C_DocType_ID,oi.C_DocTypeTarget_ID "); // 21
 		}
 		
 		if (!p_DateAcct)//FR 1933937
@@ -224,20 +224,23 @@ public class FTUAging extends FTUProcess
 				//BigDecimal PaidAmt = rs.getBigDecimal(12);
 				BigDecimal OpenAmt = rs.getBigDecimal(13);
 				//
-				int C_Activity_ID = p_IsListInvoices ? rs.getInt(14) : null;
-				int C_Campaign_ID = p_IsListInvoices ? rs.getInt(15) : null;
-				int C_Project_ID = p_IsListInvoices ? rs.getInt(16) : null;
+				int C_Activity_ID = p_IsListInvoices ? rs.getInt(14) : 0;
+				int C_Campaign_ID = p_IsListInvoices ? rs.getInt(15) : 0;
+				int C_Project_ID = p_IsListInvoices ? rs.getInt(16) : 0;
 				int AD_Org_ID = rs.getInt(17);
 				
 				String DocumentNo = p_IsListInvoices ? rs.getString(18) : "";
-				int C_PaymentTerm_ID = p_IsListInvoices ? rs.getInt(19) : null;
+				int C_PaymentTerm_ID = p_IsListInvoices ? rs.getInt(19) : 0;
 				Timestamp DateInvoiced = p_IsListInvoices ? rs.getTimestamp(7) : null;
 				Timestamp DateDoc = p_IsListInvoices ? rs.getTimestamp(20) : null;
 
 				BigDecimal Rate = rs.getBigDecimal(21);
 				
-				int C_DocType_ID = p_IsListInvoices ? rs.getInt(22) : null;
-
+				int C_DocType_ID = p_IsListInvoices ? rs.getInt(22) : 0;
+				int C_DocTypeTarget_ID = p_IsListInvoices ? rs.getInt(23) : 0;
+				
+				
+				
 				rows++;
 				//	New Aging Row
 				if (aging == null 		//	Key
@@ -268,6 +271,8 @@ public class FTUAging extends FTUProcess
 					aging.set_ValueOfColumn("DateInvoiced", DateInvoiced);
 					aging.set_ValueOfColumn("DateDoc", DateDoc);
 					aging.set_ValueOfColumn("C_DocType_ID", C_DocType_ID);
+					aging.set_ValueOfColumn("C_DocTypeTarget_ID", C_DocTypeTarget_ID);
+					
 					aging.set_ValueOfColumn("Rate", Rate);
 				}
 				//	Fill Buckets
