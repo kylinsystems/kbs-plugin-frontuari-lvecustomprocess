@@ -271,7 +271,7 @@ public class FTUAging extends FTUProcess
 					aging.set_ValueOfColumn("DateInvoiced", DateInvoiced);
 					aging.set_ValueOfColumn("DateDoc", DateDoc);
 					aging.set_ValueOfColumn("C_DocType_ID", C_DocType_ID);
-					aging.set_ValueOfColumn("C_DocTypeTarget_ID", C_DocTypeTarget_ID);
+					aging.set_ValueOfColumn("C_DocTypeTarget_ID", C_DocTypeTarget_ID); 
 					
 					aging.set_ValueOfColumn("Rate", Rate);
 				}
