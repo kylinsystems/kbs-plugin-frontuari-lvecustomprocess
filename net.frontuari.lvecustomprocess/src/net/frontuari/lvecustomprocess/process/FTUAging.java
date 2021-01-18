@@ -125,7 +125,7 @@ public class FTUAging extends FTUProcess
 			}
 			else
 			{
-				sql.append(" oi.GrandTotal, invoicePaidToDate(oi.C_Invoice_ID, oi.C_Currency_ID, 1,"+dateacct+") AS PaidAmt, invoiceOpenToDate(oi.C_Invoice_ID,oi.C_InvoicePaySchedule_ID,"+dateacct+") AS OpenAmt ");			//	11..13
+				sql.append(" oi.GrandTotal, invoicePaidToDateNegtType(oi.C_Invoice_ID, oi.C_Currency_ID, 1,"+dateacct+",bp.TypeNegotiation) AS PaidAmt, invoiceOpenToDate(oi.C_Invoice_ID,oi.C_InvoicePaySchedule_ID,"+dateacct+",bp.TypeNegotiation) AS OpenAmt ");			//	11..13
 			}
 		}
 		else
@@ -139,8 +139,8 @@ public class FTUAging extends FTUProcess
 			}
 			else
 			{
-				sql.append(", currencyConvert(invoicePaidToDate(oi.C_Invoice_ID, oi.C_Currency_ID, 1,"+dateacct+")").append(s) // 12
-				.append(", currencyConvert(invoiceOpenToDate(oi.C_Invoice_ID,oi.C_InvoicePaySchedule_ID,"+dateacct+")").append(s);  // 13
+				sql.append(", currencyConvert(invoicePaidToDate(oi.C_Invoice_ID, oi.C_Currency_ID, 1,"+dateacct+",bp.TypeNegotiation)").append(s) // 12
+				.append(", currencyConvert(invoiceOpenToDate(oi.C_Invoice_ID,oi.C_InvoicePaySchedule_ID,"+dateacct+",bp.TypeNegotiation)").append(s);  // 13
 			}
 		}
 		sql.append(",oi.C_Activity_ID,oi.C_Campaign_ID,oi.C_Project_ID,oi.AD_Org_ID ");	//	14..17
@@ -149,11 +149,11 @@ public class FTUAging extends FTUProcess
 		//	Add CurrencyRate
 		if (p_ConvertCurrencyTo_ID == 0)
 		{
-			sql.append(",currencyRate(oi.C_Currency_ID,"+Env.getContext(getCtx(), "$C_Currency_ID")+",oi.DateInvoiced,oi.C_ConversionType_ID,oi.AD_Client_ID,oi.AD_Org_ID,true) AS Rate,oi.C_DocType_ID,oi.C_DocTypeTarget_ID "); // 21
+			sql.append(",currencyRate(oi.C_Currency_ID,"+Env.getContext(getCtx(), "$C_Currency_ID")+",(CASE WHEN bp.TypeNegotiation = 'DD' THEN oi.DateInvoiced ELSE NOW() END),oi.C_ConversionType_ID,oi.AD_Client_ID,oi.AD_Org_ID,true) AS Rate,oi.C_DocType_ID,oi.C_DocTypeTarget_ID "); // 21
 		}
 		else
 		{
-			sql.append(",currencyRate(oi.C_Currency_ID,"+p_ConvertCurrencyTo_ID+",oi.DateInvoiced,oi.C_ConversionType_ID,oi.AD_Client_ID,oi.AD_Org_ID) AS Rate ,oi.C_DocType_ID,oi.C_DocTypeTarget_ID "); // 21
+			sql.append(",currencyRate(oi.C_Currency_ID,"+p_ConvertCurrencyTo_ID+",(CASE WHEN bp.TypeNegotiation = 'DD' THEN oi.DateInvoiced ELSE NOW() END),oi.C_ConversionType_ID,oi.AD_Client_ID,oi.AD_Org_ID) AS Rate ,oi.C_DocType_ID,oi.C_DocTypeTarget_ID "); // 21
 		}
 		
 		if (!p_DateAcct)//FR 1933937
@@ -182,7 +182,7 @@ public class FTUAging extends FTUProcess
 		
 		if (p_DateAcct)//FR 1933937
 		{
-			sql.append(" AND invoiceOpenToDate(oi.C_Invoice_ID,oi.C_InvoicePaySchedule_ID,"+dateacct+") <> 0 ");
+			sql.append(" AND invoiceOpenToDate(oi.C_Invoice_ID,oi.C_InvoicePaySchedule_ID,"+dateacct+",bp.TypeNegotiation) <> 0 ");
 		}
 		
 		sql.append(" ORDER BY oi.C_BPartner_ID, oi.C_Currency_ID, oi.C_Invoice_ID");
