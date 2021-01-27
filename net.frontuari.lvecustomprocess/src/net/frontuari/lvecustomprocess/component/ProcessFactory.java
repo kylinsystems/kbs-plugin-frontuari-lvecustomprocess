@@ -20,6 +20,7 @@ package net.frontuari.lvecustomprocess.component;
 
 import net.frontuari.lvecustomprocess.base.FTUProcessFactory;
 import net.frontuari.lvecustomprocess.process.FTUAging;
+import net.frontuari.lvecustomprocess.process.FTUInvoiceWriteOff;
 import net.frontuari.lvecustomprocess.process.FTURfQCreate;
 import net.frontuari.lvecustomprocess.process.FTURfQCreatePO;
 import net.frontuari.lvecustomprocess.process.FTURfQResponseRank;
@@ -46,6 +47,7 @@ public class ProcessFactory extends FTUProcessFactory {
 		registerProcess(RequisitionPOCreate.class);
 		registerProcess(FTURfQResponseRank.class);
 		registerProcess(FTUAging.class);
+		registerProcess(FTUInvoiceWriteOff.class);
 	}
 
 }
