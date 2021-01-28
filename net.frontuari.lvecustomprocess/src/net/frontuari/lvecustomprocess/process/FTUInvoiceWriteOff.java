@@ -34,9 +34,9 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 	/** Max Amt					*/
 	private BigDecimal	p_MaxInvWriteOffAmt = Env.ZERO;
 	/** AP or AR				*/
-	//private String		p_APAR = "R";
-	/*private static String	ONLY_AP = "P";
-	private static String	ONLY_AR = "R";*/
+	private String		p_APAR = "R";
+	private static String	ONLY_AP = "P";
+	private static String	ONLY_AR = "R";
 	
 	/** Invoice Date From		*/
 	private Timestamp	p_DateInvoiced_From = null;
@@ -86,8 +86,8 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 			//
 			else if (name.equals("MaxInvWriteOffAmt"))
 				p_MaxInvWriteOffAmt = (BigDecimal)para[i].getParameter();
-			/*else if (name.equals("APAR"))
-				p_APAR = (String)para[i].getParameter();*/
+			else if (name.equals("APAR"))
+				p_APAR = (String)para[i].getParameter();
 			//
 			else if (name.equals("DateInvoiced"))
 			{
@@ -146,7 +146,7 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 			.append(" C_Currency_ID,GrandTotal, invoiceOpen(C_Invoice_ID, 0) AS OpenAmt, ")
 			.append(" C_ConversionType_ID, AD_Client_ID, AD_Org_ID ")
 			.append("FROM C_Invoice WHERE ");
-		if (p_C_Invoice_ID != 0)
+		if (p_C_Invoice_ID > 0)
 			sql.append("C_Invoice_ID=").append(p_C_Invoice_ID);
 		else
 		{
@@ -155,11 +155,10 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 			else if (p_C_BP_Group_ID != 0)
 				sql.append("EXISTS (SELECT * FROM C_BPartner bp WHERE C_Invoice.C_BPartner_ID=bp.C_BPartner_ID AND bp.C_BP_Group_ID=")
 				.append(p_C_BP_Group_ID).append(")").append(" AND ");
-			/*if (ONLY_AR.equals(p_APAR))
-				sql.append(" AND IsSOTrx='Y'");
+			if (ONLY_AR.equals(p_APAR))
+				sql.append("IsSOTrx='Y'");
 			else if (ONLY_AP.equals(p_APAR))
-				sql.append(" AND IsSOTrx='N'");*/
-			sql.append("IsSOTrx='Y'");
+				sql.append("IsSOTrx='N'");
 			//
 			if (p_DateInvoiced_From != null && p_DateInvoiced_To != null)
 				sql.append(" AND TRUNC(DateInvoiced) BETWEEN ")
@@ -176,9 +175,10 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 				sql.append(" AND C_DocType_ID IN (")
 					.append(p_C_DocType_ID)
 				.append(")");
+			
+			sql.append(" AND IsTransferred = ?");
 		}
 
-		sql.append(" AND IsTransferred = ?");
 		sql.append(" AND IsPaid='N' ORDER BY C_Currency_ID, C_BPartner_ID, DateInvoiced");
 		if (log.isLoggable(Level.FINER)) log.finer(sql.toString());
 		//
@@ -188,8 +188,11 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 		try
 		{
 			pstmt = DB.prepareStatement (sql.toString(), get_TrxName());
-			DB.setParameter(pstmt, 1, p_IsTransferred);
-			rs = pstmt.executeQuery ();
+			
+			if (p_C_Invoice_ID <= 0)
+				DB.setParameter(pstmt, 1, p_IsTransferred);
+			
+			rs = pstmt.executeQuery();
 			while (rs.next ())
 			{
 				if (writeOff(rs.getInt(1), rs.getString(2), rs.getTimestamp(3)
@@ -306,7 +309,7 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 			m_payment.setDateAcct(p_DateAcct);
 			m_payment.setDescription(getProcessInfo().getTitle() + " #" + getAD_PInstance_ID());
 			m_payment.setC_BPartner_ID(invoice.getC_BPartner_ID());
-			m_payment.setIsReceipt(true);	//	payments are negative
+			m_payment.setIsReceipt(invoice.isSOTrx());	//	payments are negative
 			m_payment.setC_Currency_ID(C_Currency_ID);
 			if (p_C_Charge_ID > 0)
 				m_payment.setC_Charge_ID(p_C_Charge_ID);
