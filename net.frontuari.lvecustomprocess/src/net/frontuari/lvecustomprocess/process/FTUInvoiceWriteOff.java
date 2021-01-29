@@ -274,9 +274,16 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 					, AD_Client_ID, AD_Org_ID);
 			
 			if (maxInvWriteOffAmt == null)
-				throw new NoCurrencyConversionException(p_C_Currency_ID, C_Currency_ID
-						, DateInvoiced, C_ConversionType_ID
-						, AD_Client_ID, AD_Org_ID);
+			{
+				addLog(C_Invoice_ID, DateInvoiced
+						, OpenAmt
+						, NoCurrencyConversionException.buildMessage(p_C_Currency_ID, C_Currency_ID
+								, DateInvoiced, C_ConversionType_ID
+								, AD_Client_ID, AD_Org_ID)
+						, MInvoice.Table_ID, C_Invoice_ID);
+				
+				return false;
+			}
 			
 			if (OpenAmt.abs().compareTo(maxInvWriteOffAmt) >= 0)
 				return false;

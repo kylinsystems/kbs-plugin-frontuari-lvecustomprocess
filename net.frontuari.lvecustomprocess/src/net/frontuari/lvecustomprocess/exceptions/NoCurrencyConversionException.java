@@ -55,7 +55,7 @@ public class NoCurrencyConversionException extends AdempiereException
 				AD_Client_ID, AD_Org_ID));
 	}
 
-	private static final String buildMessage(int C_Currency_ID, int C_Currency_ID_To,
+	public static final String buildMessage(int C_Currency_ID, int C_Currency_ID_To,
 			Timestamp ConvDate,
 			int C_ConversionType_ID,
 			int AD_Client_ID, int AD_Org_ID)
