@@ -60,6 +60,12 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 	private boolean		p_IsValidateAmount = false;
 	/** Transferred */
 	private boolean		p_IsTransferred = false;
+	/** Overdrawn */
+	private boolean		p_IsOverdrawn = false;
+	/** C_POSTenderType_ID */
+	private String		p_C_POSTenderType_ID = null;
+	/** AD_Org_ID */
+	private int			p_AD_Org_ID = 0;
 
 	/**	Allocation Hdr			*/
 	private MAllocationHdr	m_alloc = null;
@@ -114,6 +120,12 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 				p_IsValidateAmount = para[i].getParameterAsBoolean();
 			else if ("IsTransferred".equals(name))
 				p_IsTransferred = para[i].getParameterAsBoolean();
+			else if ("IsOverdrawn".equals(name))
+				p_IsOverdrawn = para[i].getParameterAsBoolean();
+			else if ("C_POSTenderType_ID".equals(name))
+				p_C_POSTenderType_ID = para[i].getParameterAsString();
+			else if ("AD_Org_ID".equals(name))
+				p_AD_Org_ID = para[i].getParameterAsInt();
 			else
 				log.log(Level.SEVERE, "Unknown Parameter: " + name);
 		}
@@ -171,10 +183,21 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 			else if (p_DateInvoiced_To != null)
 				sql.append(" AND TRUNC(DateInvoiced) <= ")
 					.append(DB.TO_DATE(p_DateInvoiced_To, true));
-			if (!Util.isEmpty(p_C_DocType_ID))
+			if (!Util.isEmpty(p_C_DocType_ID, true))
 				sql.append(" AND C_DocType_ID IN (")
-					.append(p_C_DocType_ID)
+					.append(p_C_DocType_ID.trim())
 				.append(")");
+			if (!Util.isEmpty(p_C_POSTenderType_ID, true))
+				sql.append(" AND NOT EXISTS(")
+					.append("SELECT 1 FROM C_InvoiceLine il")
+					.append(" INNER JOIN C_OrderLine ol ON ol.C_OrderLine_ID = il.C_OrderLine_ID")
+					.append(" INNER JOIN C_POSPayment pop ON pop.C_Order_ID = ol.C_Order_ID")
+					.append(" WHERE il.C_Invoice_ID = C_Invoice.C_Invoice_ID")
+					.append(" AND pop.C_POSTenderType_ID IN (").append(p_C_POSTenderType_ID.trim()).append(")")
+				.append(")");
+			
+			if (p_AD_Org_ID > 0)
+				sql.append(" AND AD_Org_ID = ").append(p_AD_Org_ID);
 			
 			sql.append(" AND IsTransferred = ?");
 		}
@@ -236,6 +259,11 @@ public class FTUInvoiceWriteOff extends FTUProcess {
 		
 		if (OpenAmt == null || OpenAmt.signum() == 0)
 			return false;
+		//Add Overdrawn Validation By Argenis Rodríguez 29-01-2021
+		if (p_IsOverdrawn && OpenAmt.signum() > 0
+				|| !p_IsOverdrawn && OpenAmt.signum() < 0)
+			return false;
+		//End By Argenis Rodríguez
 		
 		//Added By Argenis Rodríguez 27-01-2021
 		if (p_IsValidateAmount)
